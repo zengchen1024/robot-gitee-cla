@@ -5,20 +5,20 @@ import (
 	"os"
 
 	"github.com/opensourceways/community-robot-lib/giteeclient"
-	libplugin "github.com/opensourceways/community-robot-lib/giteeplugin"
 	"github.com/opensourceways/community-robot-lib/logrusutil"
 	liboptions "github.com/opensourceways/community-robot-lib/options"
+	"github.com/opensourceways/community-robot-lib/robot-gitee-framework"
 	"github.com/opensourceways/community-robot-lib/secret"
 	"github.com/sirupsen/logrus"
 )
 
 type options struct {
-	plugin liboptions.PluginOptions
-	gitee  liboptions.GiteeOptions
+	service liboptions.ServiceOptions
+	gitee   liboptions.GiteeOptions
 }
 
 func (o *options) Validate() error {
-	if err := o.plugin.Validate(); err != nil {
+	if err := o.service.Validate(); err != nil {
 		return err
 	}
 
@@ -29,7 +29,7 @@ func gatherOptions(fs *flag.FlagSet, args ...string) options {
 	var o options
 
 	o.gitee.AddFlags(fs)
-	o.plugin.AddFlags(fs)
+	o.service.AddFlags(fs)
 
 	fs.Parse(args)
 	return o
@@ -47,12 +47,12 @@ func main() {
 	if err := secretAgent.Start([]string{o.gitee.TokenPath}); err != nil {
 		logrus.WithError(err).Fatal("Error starting secret agent.")
 	}
+	
+	defer secretAgent.Stop()
 
 	c := giteeclient.NewClient(secretAgent.GetTokenGenerator(o.gitee.TokenPath))
 
-	p := newRobot(c)
+	r := newRobot(c)
 
-	libplugin.Run(p, o.plugin)
-
-	secretAgent.Stop()
+	framework.Run(r, o.service)
 }
