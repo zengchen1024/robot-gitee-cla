@@ -80,7 +80,7 @@ type botConfig struct {
 
 	// LitePRCommitter is the config for lite pr commiter.
 	// It must be set when `check_by_committer` is true.
-	LitePRCommitter litePRCommiter `json:"lite_pr_committer,omitempty"`
+	LitePRCommitter litePRCommiter `json:"lite_pr_committer"`
 
 	// FAQURL is the url of faq which is corresponding to the way of checking CLA
 	FAQURL string `json:"faq_url" required:"true"`

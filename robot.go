@@ -175,16 +175,12 @@ func (bot *robot) getPRCommitsAbout(
 		return nil, fmt.Errorf("commits is empty, cla cannot be checked")
 	}
 
-	authorEmailOfCommit := func(c *sdk.PullRequestCommits) string {
-		return getAuthorOfCommit(c, cfg.CheckByCommitter, cfg.LitePRCommitter.isLitePR)
-	}
-
 	result := map[string]bool{}
 	unsigned := make([]*sdk.PullRequestCommits, 0, len(commits))
 	for i := range commits {
 		c := &commits[i]
+		email := strings.Trim(getAuthorOfCommit(c, cfg), " ")
 
-		email := strings.Trim(authorEmailOfCommit(c), " ")
 		if !utils.IsValidEmail(email) {
 			unsigned = append(unsigned, c)
 			continue
@@ -201,6 +197,7 @@ func (bot *robot) getPRCommitsAbout(
 		if err != nil {
 			return nil, err
 		}
+
 		result[email] = b
 		if !b {
 			unsigned = append(unsigned, c)
@@ -210,29 +207,20 @@ func (bot *robot) getPRCommitsAbout(
 	return unsigned, nil
 }
 
-func getAuthorOfCommit(
-	c *sdk.PullRequestCommits,
-	byCommitter bool,
-	isLitePR func(email string, name string) bool,
-) string {
-	if c == nil || c.Commit == nil {
+func getAuthorOfCommit(c *sdk.PullRequestCommits, cfg *botConfig) string {
+	if c == nil {
 		return ""
 	}
 
-	commit := c.Commit
+	if cfg.CheckByCommitter {
+		v := c.Commit.GetCommitter()
 
-	if byCommitter {
-		committer := commit.Committer
-		if committer != nil && !isLitePR(committer.Email, committer.Name) {
-			return committer.Email
+		if !cfg.LitePRCommitter.isLitePR(v.GetEmail(), v.GetName()) {
+			return v.GetEmail()
 		}
 	}
 
-	if commit.Author == nil {
-		return ""
-	}
-
-	return commit.Author.Email
+	return c.Commit.GetAuthor().GetEmail()
 }
 
 func isSigned(email, url string) (bool, error) {
