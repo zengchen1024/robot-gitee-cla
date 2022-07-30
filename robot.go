@@ -294,8 +294,14 @@ func alreadySigned(user string) string {
 }
 
 func generateUnSignComment(commits []*sdk.PullRequestCommits) string {
-	if len(commits) == 0 {
+	n := len(commits)
+	if n == 0 {
 		return ""
+	}
+
+	ten := 10
+	if n > ten {
+		commits = commits[:ten]
 	}
 
 	cs := make([]string, 0, len(commits))
@@ -313,5 +319,11 @@ func generateUnSignComment(commits []*sdk.PullRequestCommits) string {
 		cs = append(cs, fmt.Sprintf("**%s** | %s", sha, msg))
 	}
 
-	return strings.Join(cs, "\n")
+	if n <= ten {
+		return strings.Join(cs, "\n")
+	}
+
+	return fmt.Sprintf("Total %d commits are not signed, and 10 of them are bellow.\n%s",
+		n, strings.Join(cs, "\n"),
+	)
 }
