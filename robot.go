@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"regexp"
 	"strings"
+	"time"
 
 	"github.com/opensourceways/community-robot-lib/config"
 	"github.com/opensourceways/community-robot-lib/robot-gitee-framework"
@@ -76,6 +77,8 @@ func (bot *robot) handlePREvent(e *sdk.PullRequestEvent, c config.Config, log *l
 	if err != nil {
 		return err
 	}
+
+	time.Sleep(3 * time.Second)
 
 	return bot.handle(org, repo, e.GetPullRequest(), cfg, false, log)
 }
